@@ -3,13 +3,14 @@
 	<parent>
 		<groupId>de.javakaffee.msm</groupId>
 		<artifactId>memcached-session-manager-project</artifactId>
-		<version>1.8.3</version>
+		<version>${msm-version}</version>
 	</parent>
 
 	<artifactId>memcached-session-manager-tc8</artifactId>
 	<packaging>jar</packaging>
 	<name>memcached-session-manager tomcat8</name>
 	<description>The msm tomcat8 specific implementation.</description>
+	<version>${msm-version}</version>
 
 	<properties>
 		<tomcat-version>8.0.5</tomcat-version>
