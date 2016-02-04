@@ -11,7 +11,7 @@
 
 	<groupId>de.javakaffee.msm</groupId>
 	<artifactId>memcached-session-manager-project</artifactId>
-	<version>1.8.3</version>
+	<version>1.8.3-base64</version>
 	<packaging>pom</packaging>
 	<name>memcached-session-manager project</name>
 	<description>
@@ -257,7 +257,7 @@
 			<dependency>
 				<groupId>commons-codec</groupId>
 				<artifactId>commons-codec</artifactId>
-				<version>1.5</version><!-- needed for membase runtime compatibility -->
+				<version>1.10</version><!-- needed for membase runtime compatibility -->
 				<scope>test</scope>
 			</dependency>
 		</dependencies>

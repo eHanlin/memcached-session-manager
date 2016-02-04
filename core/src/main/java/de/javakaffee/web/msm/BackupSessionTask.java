@@ -23,6 +23,7 @@ import static de.javakaffee.web.msm.Statistics.StatsType.BACKUP;
 import static de.javakaffee.web.msm.Statistics.StatsType.MEMCACHED_UPDATE;
 import static de.javakaffee.web.msm.Statistics.StatsType.RELEASE_LOCK;
 
+import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.Callable;
@@ -41,6 +42,7 @@ import org.apache.juli.logging.Log;
 import org.apache.juli.logging.LogFactory;
 
 import de.javakaffee.web.msm.BackupSessionTask.BackupResult;
+import org.apache.tomcat.util.codec.binary.Base64;
 
 /**
  * Stores the provided session in memcached if the session was modified
@@ -67,12 +69,10 @@ public class BackupSessionTask implements Callable<BackupResult> {
      * @param sessionBackupAsync
      * @param sessionBackupTimeout
      * @param memcached
-     * @param force
      *            specifies, if the session needs to be saved by all means, e.g.
      *            as it has to be relocated to another memcached
      *            node (the session id had been changed before in this case).
      * @param memcachedNodesManager
-     * @param failoverNodeIds
      */
     public BackupSessionTask( final MemcachedBackupSession session,
             final boolean sessionIdChanged,
@@ -200,6 +200,9 @@ public class BackupSessionTask implements Callable<BackupResult> {
         } catch (final TimeoutException e) {
             handleException(session, e);
             return new BackupResult(BackupResultStatus.FAILURE, data, null);
+        } catch (final UnsupportedEncodingException e) {
+            handleException(session, e);
+            return new BackupResult(BackupResultStatus.FAILURE, data, null);
         }
     }
 
@@ -215,7 +218,7 @@ public class BackupSessionTask implements Callable<BackupResult> {
         _memcachedNodesManager.setNodeAvailableForSessionId(session.getId(), false);
     }
 
-    private void storeSessionInMemcached( final MemcachedBackupSession session, final byte[] data) throws InterruptedException, ExecutionException, TimeoutException {
+    private void storeSessionInMemcached( final MemcachedBackupSession session, final byte[] data) throws InterruptedException, ExecutionException, TimeoutException, UnsupportedEncodingException {
 
         /* calculate the expiration time (instead of using just maxInactiveInterval), as
          * this is relevant for the update of the expiration time: if we would just use
@@ -225,9 +228,10 @@ public class BackupSessionTask implements Callable<BackupResult> {
         final int expirationTime = session.getMemcachedExpirationTimeToSet();
         final long start = System.currentTimeMillis();
         try {
+            String dataStr = Base64.encodeBase64String(data.clone());
             final Future<Boolean> future = _memcached.set(
                     _memcachedNodesManager.getStorageKeyFormat().format(session.getId()),
-                    toMemcachedExpiration(expirationTime), data );
+                    toMemcachedExpiration(expirationTime), dataStr );
             if ( !_sessionBackupAsync ) {
                 future.get( _sessionBackupTimeout, TimeUnit.MILLISECONDS );
                 session.setLastMemcachedExpirationTime( expirationTime );

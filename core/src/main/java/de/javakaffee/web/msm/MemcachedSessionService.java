@@ -53,6 +53,7 @@ import de.javakaffee.web.msm.BackupSessionService.SimpleFuture;
 import de.javakaffee.web.msm.BackupSessionTask.BackupResult;
 import de.javakaffee.web.msm.LockingStrategy.LockingMode;
 import de.javakaffee.web.msm.MemcachedNodesManager.MemcachedClientCallback;
+import org.apache.tomcat.util.codec.binary.Base64;
 
 /**
  * This is the core of memcached session manager, managing sessions in memcached.
@@ -924,7 +925,8 @@ public class MemcachedSessionService {
                 return null;
             }
 
-            final MemcachedBackupSession session = _transcoderService.deserialize( (byte[]) obj, _manager );
+            byte[] sessionBytes = Base64.decodeBase64((String) obj);
+            final MemcachedBackupSession session = _transcoderService.deserialize( sessionBytes, _manager );
             session.setSticky( _sticky );
             session.setLastAccessedTimeInternal( validityInfo.getLastAccessedTime() );
             session.setThisAccessedTimeInternal( validityInfo.getThisAccessedTime() );
@@ -1093,11 +1095,12 @@ public class MemcachedSessionService {
             _memcachedNodesManager.onLoadFromMemcachedSuccess( sessionId );
 
             if ( object != null ) {
-                if ( !(object instanceof byte[]) ) {
-                    throw new RuntimeException( "The loaded object for sessionId " + sessionId + " is not of required type byte[], but " + object.getClass().getName() );
+                if ( !(object instanceof String) ) {
+                    throw new RuntimeException( "The loaded object for sessionId " + sessionId + " is not of required type String, but " + object.getClass().getName() );
                 }
                 final long startDeserialization = System.currentTimeMillis();
-                final MemcachedBackupSession result = _transcoderService.deserialize( (byte[]) object, _manager );
+                byte[] sessionBytes = Base64.decodeBase64((String) object);
+                final MemcachedBackupSession result = _transcoderService.deserialize( sessionBytes, _manager );
                 _statistics.registerSince( SESSION_DESERIALIZATION, startDeserialization );
                 _statistics.registerSince( LOAD_FROM_MEMCACHED, start );
 
