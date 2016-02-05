@@ -54,8 +54,6 @@
 
 	<modules>
 		<module>core</module>
-		<module>tomcat7</module>
-		<module>tomcat8</module>
 	</modules>
 
 	<build>
