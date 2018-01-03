@@ -74,4 +74,34 @@ public class MemcachedStorageClient implements StorageClient {
         _memcached.shutdown();
     }
 
+    /**
+     * Transcoder used by this class to store the byte array data.
+     */
+    public static class ByteArrayTranscoder implements Transcoder<byte[]> {
+        /**
+         * Transcoder singleton instance.
+         */
+        public static final ByteArrayTranscoder INSTANCE = new ByteArrayTranscoder();
+
+        @Override
+        public boolean asyncDecode(CachedData d) {
+            return false;
+        }
+
+        @Override
+        public byte[] decode(CachedData d) {
+            return d.getData();
+        }
+
+        @Override
+        public CachedData encode(byte[] o) {
+            return new CachedData(0, o, getMaxSize());
+        }
+
+        @Override
+        public int getMaxSize() {
+            return CachedData.MAX_SIZE;
+        }
+    }
+
 }
