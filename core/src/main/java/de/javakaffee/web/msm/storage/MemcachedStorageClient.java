@@ -22,6 +22,8 @@ import net.spy.memcached.CachedData;
 import net.spy.memcached.MemcachedClient;
 import net.spy.memcached.transcoders.Transcoder;
 
+import org.apache.tomcat.util.codec.binary.Base64;
+
 /**
  * Storage client backed by a {@link MemcachedClient} instance.
  */
@@ -49,17 +51,17 @@ public class MemcachedStorageClient implements StorageClient {
 
     @Override
     public Future<Boolean> add(String key, int exp, byte[] o) {
-        return _memcached.add(key, exp, o, ByteArrayTranscoder.INSTANCE);
+        return _memcached.add(key, exp, Base64.encodeBase64String(o));
     }
 
     @Override
     public Future<Boolean> set(String key, int exp, byte[] o) {
-        return _memcached.set(key, exp, o, ByteArrayTranscoder.INSTANCE);
+        return _memcached.set(key, exp, Base64.encodeBase64String(o));
     }
     
     @Override
     public byte[] get(String key) {
-        return _memcached.get(key, ByteArrayTranscoder.INSTANCE);
+        return Base64.decodeBase64((String) _memcached.get(key));
     }
     
     @Override
@@ -72,33 +74,4 @@ public class MemcachedStorageClient implements StorageClient {
         _memcached.shutdown();
     }
 
-    /**
-     * Transcoder used by this class to store the byte array data.
-     */
-    public static class ByteArrayTranscoder implements Transcoder<byte[]> {
-        /**
-         * Transcoder singleton instance.
-         */
-        public static final ByteArrayTranscoder INSTANCE = new ByteArrayTranscoder();
-        
-        @Override
-        public boolean asyncDecode(CachedData d) {
-            return false;
-        }
-        
-        @Override
-        public byte[] decode(CachedData d) {
-            return d.getData();
-        }
-        
-        @Override
-        public CachedData encode(byte[] o) {
-            return new CachedData(0, o, getMaxSize());
-        }
-        
-        @Override
-        public int getMaxSize() {
-            return CachedData.MAX_SIZE;
-        }
-    }
 }
