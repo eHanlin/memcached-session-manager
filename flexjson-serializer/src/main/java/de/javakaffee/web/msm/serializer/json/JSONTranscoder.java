@@ -13,11 +13,7 @@
  */
 package de.javakaffee.web.msm.serializer.json;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.Closeable;
-import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.*;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -67,7 +63,13 @@ public class JSONTranscoder implements SessionAttributesTranscoder {
 	 */
 	@Override
 	public ConcurrentMap<String, Object> deserializeAttributes(final byte[] in) {
-		final InputStreamReader inputStream = new InputStreamReader( new ByteArrayInputStream( in ) );
+		InputStreamReader inputStream = null;
+		try {
+			inputStream = new InputStreamReader( new ByteArrayInputStream( in ), "UTF-8" );
+		} catch (UnsupportedEncodingException e) {
+			LOG.warn("deserialize charset code not UTF-8");
+			throw new TranscoderDeserializationException(e);
+		}
 		if (LOG.isDebugEnabled()) {
 		    LOG.debug("deserialize the stream");
 		}
@@ -98,7 +100,7 @@ public class JSONTranscoder implements SessionAttributesTranscoder {
         	if (LOG.isDebugEnabled()) {
         	    LOG.debug("JSON Serialised object: " + serResult);
         	}
-        	return serResult.getBytes(); // converts to bytes
+        	return serResult.getBytes("UTF-8"); // converts to bytes
         } catch (final Exception e) {
         	LOG.warn("Caught Exception deserializing JSON " + e);
         	throw new IllegalArgumentException();
